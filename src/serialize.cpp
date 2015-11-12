@@ -64,13 +64,19 @@ namespace util{
         bool serializer::writebuff(sd_uint8_t* buff, sd_uint32_t size){
             if(size<getPersistentSize())
                 return false;
-            sd_uint8_t * buff_head = buff; 
+            sd_uint8_t * buff_head = buff;
+            memcpy(buff_head, m_start_sig,3);
+            buff_head +=3;
+            memcpy(buff_head, &m_totalsize, sizeof(m_totalsize));
+            sd_uint8_t qsize = m_data_q.size();
+            memcpy(buff_head, &qsize, sizeof(qsize));
             for(auto& i: m_data_q ){
                 memcpy(buff_head, &i.size, sizeof(i.size));
                 buff_head+=sizeof(i.size);
                 memcpy(buff_head, i.buff.get(), i.size);
                 buff_head +=i.size;
             }
+
             for(auto&i:m_obj_q){
                 memcpy(buff_head, &i.size, sizeof(i.size));
                 buff_head += sizeof(i.size);
@@ -78,9 +84,40 @@ namespace util{
                    return false;
                 buff_head += i.size;
             }
+            memcpy(buff_head, m_end_sig, 3);
+            return true;
         }
 
-        
+       deserializer::deserializer(sd_uint8_t start[3], sd_uint8_t end[3], sd_uint8_t* inputbuff){
+           memcpy(m_start_sig, start, 3);
+           memcpy(m_end_sig, end, 3);
+           m_in_buff = inputbuff;
+       }
 
+       bool deserializer::validate(){
+           sd_uint8_t sig[3];
+           sd_uint8_t * buff_head = m_in_buff;
+           if(memcmp(buff_head, m_start_sig, 3)!=0)
+             return false;
+       
+           buff_head += 3;
+           memcpy(&m_totalsize, buff_head, sizeof(m_totalsize));
+           buff_head +=m_totalsize-6;
+           if(memcmp(buff_head, m_end_sig, 3)!=0)
+             return false;
+        
+           return true;
+
+       }
+
+       bool deserializer::readbuff(){
+         
+           if(!validate())
+            return false;
+
+           sd_uint8_t * buff_head = m_in_buff;
+           
+
+       }
     }
 }

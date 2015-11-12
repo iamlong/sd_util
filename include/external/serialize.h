@@ -55,6 +55,23 @@ namespace util {
                 vector<objElement> m_obj_q;
 
         };
+
+        class deserializer{
+
+            public:
+                deserializer(sd_uint8_t start[3], sd_uint8_t end[3], sd_uint8_t * inputbuff);
+                pull_data(auto& outvalue);
+                pull_data(string& outvalue);
+                pull_data(serializable & obj);
+            
+            private:
+                sd_uint8_t m_start_sig[3];
+                sd_uint8_t m_end_sig[3];
+                sd_uint8_t * m_in_buff;
+                sd_uint32_t m_totalsize;
+                bool validate();
+                bool readbuff();
+         };   
     }
 }
 #endif
