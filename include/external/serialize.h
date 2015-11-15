@@ -17,9 +17,12 @@ namespace util {
 
         class serializer;
 
+        class deserializer;
+
         class serializable{
             public:
                  virtual sd_uint32_t serializing(serializer * serialObj)=0;
+                 virtual bool deserializing(deserializer * deserializeobj)=0;
                  void setsig(sd_uint8_t start[3], sd_uint8_t end[3]);
                  bool checksig(sd_uint8_t start[3], sd_uint8_t end[3]);
                  serializer * getSerializer();
@@ -28,6 +31,7 @@ namespace util {
                 sd_uint8_t end_sig[3];
             private:
                 serializer * m_serializer;
+                deserializer * m_deserializer;
         };
         struct dataElement{
             sd_uint16_t size;
@@ -59,18 +63,24 @@ namespace util {
         class deserializer{
 
             public:
-                deserializer(sd_uint8_t start[3], sd_uint8_t end[3], sd_uint8_t * inputbuff);
+                deserializer(sd_uint8_t * inputbuff);
                 pull_data(auto& outvalue);
                 pull_data(string& outvalue);
                 pull_data(serializable & obj);
+                setsig(sd_uint8_t start[3], sd_uint8_t end[3]);
             
             private:
                 sd_uint8_t m_start_sig[3];
                 sd_uint8_t m_end_sig[3];
                 sd_uint8_t * m_in_buff;
                 sd_uint32_t m_totalsize;
+                sd_uint8_t * m_in_buff_end; //ptr to end_sig, it is used to be the end of readbuff;
+                vector<dataElement> m_data_q;
+                vector<objElement> m_obj_q;
+
                 bool validate();
                 bool readbuff();
+
          };   
     }
 }
