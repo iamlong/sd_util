@@ -64,9 +64,9 @@ namespace util {
 
             public:
                 deserializer(sd_uint8_t * inputbuff);
-                pull_data(auto& outvalue);
-                pull_data(string& outvalue);
-                pull_data(serializable & obj);
+                sd_uint16_t pull_data(auto& outvalue);
+                sd_uint16_t pull_data(string& outvalue);
+                sd_uint32_t pull_data(serializable & obj);
                 setsig(sd_uint8_t start[3], sd_uint8_t end[3]);
             
             private:

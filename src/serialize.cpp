@@ -36,8 +36,13 @@ namespace util{
             return data.size;
         }
 
-        sd_uint16_t deserializer::pull_data(auto & outvalue){
-            
+        sd_uint16_t deserializer::pull_data(auto& outvalue){
+         
+            dataElement data;
+            data.size = sizeof(outvalue);
+            data.buff.reset(outvalue);
+            m_data_q.push_back(data);
+            return data.size;
         }
         sd_uint16_t serializer::push_data(string origin_data){
             dataElement data;
@@ -50,7 +55,10 @@ namespace util{
 
         }
         sd_uint16_t deserializer::pull_data(string & outstring){
-
+            dataElement data;
+            data.size = 0;
+            m_data_q.push_back(data);
+            return data.size;
         }
 
         sd_uint32_t serializer::push_data(serializable& obj){
@@ -64,7 +72,11 @@ namespace util{
             
         }
         sd_uint32_t deserializer::pull_data(serializable & obj){
-            
+            objElement data;
+            data.size = 0;
+            data.obj.reset(&obj);
+            m_obj_q.push_back(data);
+            return data.size;
         }
 
         sd_uint32_t serializer::getPersistentSize(){
@@ -142,12 +154,21 @@ namespace util{
            sd_uint8_t qsize;
            memcpy(&qsize, buff_head, sizeof(qsize));
            buff_head += sizeof(qsize);
-           for(sd_uint8_t i; i<qsize; i++){
-               dataElement data;
-               memcpy(&data.size, buff_head, sizeof(data.size));
-               buff_head += sizeof(data.size);
+           
+           if(qsize!=m_data_q.size()) //number of data element should match the number of datas want to pull;
+               return false;
 
-               data.buff.reset(new sd_uint8_t[data.size]);
+           for(sd_uint8_t i; i<qsize; i++){
+               dataElement data = m_data_q[i];
+               sd_uint16_t data_size;
+               memcpy(&data_size, buff_head, sizeof(data_size));
+               if(data_size!=data.size&&data.size!=0) //data_size should match
+                   return false;
+               else if(data.size==0){
+                   data.size = data_size;
+                   data.buff.reset(new sd_uint8_t[data.size]);
+               }
+               buff_head += sizeof(data.size);
                memcpy(data.buff.get(), buff_head, data.size);
                buff_head += data.size;
                m_data_q.push_back(data);
@@ -159,18 +180,7 @@ namespace util{
            buff_head += sizeof(qsize);
 
            for(sd_uint8_t i; i<qsize; i++){
-               objElement objele;
-               memcpy(&objele.size, buff_head, sizeof(objele.size));
-               serializable * obj=new serializable();
-               deserializer desel(buff_head);
-                
-               if(!obj->deserializing(&desel))
-                   return false;
-            
-               
-
-               buff_head += data.size;
-
+            ;
 
            }
            
