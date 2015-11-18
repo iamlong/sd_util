@@ -57,6 +57,7 @@ namespace util{
         sd_uint16_t deserializer::pull_data(string & outstring){
             dataElement data;
             data.size = 0;
+            data.buff.reset((sd_uint8_t*)&outstring);
             m_data_q.push_back(data);
             return data.size;
         }
@@ -164,12 +165,18 @@ namespace util{
                memcpy(&data_size, buff_head, sizeof(data_size));
                if(data_size!=data.size&&data.size!=0) //data_size should match
                    return false;
-               else if(data.size==0){
+               else if(data.size==0){ //this is a string
                    data.size = data_size;
-                   data.buff.reset(new sd_uint8_t[data.size]);
+                   sd_uint8_t * temp = new sd_uint8_t[data.size];
+                   buff_head += sizeof(data.size);
+                   memcpy(temp, buff_head, data.size);
+                   string * str = (string*) (data.buff.get());
+                   str->append((char*) temp, (size_t)data.size);
+                   delete temp;
+               }else {
+                buff_head += sizeof(data.size);
+                memcpy(data.buff.get(), buff_head, data.size);
                }
-               buff_head += sizeof(data.size);
-               memcpy(data.buff.get(), buff_head, data.size);
                buff_head += data.size;
                m_data_q.push_back(data);
                if(buff_head>buff_end&&i<qsize)
