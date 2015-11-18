@@ -22,7 +22,7 @@ namespace util {
         class serializable{
             public:
                  virtual sd_uint32_t serializing(serializer * serialObj)=0;
-                 virtual bool deserializing(deserializer * deserializeobj)=0;
+                 virtual sd_uint32_t deserializing(deserializer * deserializeobj)=0;
                  void setsig(sd_uint8_t start[3], sd_uint8_t end[3]);
                  bool checksig(sd_uint8_t start[3], sd_uint8_t end[3]);
                  serializer * getSerializer();

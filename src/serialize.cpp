@@ -184,12 +184,22 @@ namespace util{
            }
             
            memcpy(&qsize, buff_head, sizeof(qsize));
-           buff_head += sizeof(qsize);
+           if(qsize!=m_obj_q.size())
+               return false;
 
-           for(sd_uint8_t i; i<qsize; i++){
-            ;
+           buff_head += sizeof(qsize);
+           
+
+           for(sd_uint8_t i=0; i<qsize; i++){
+            deserializer deserial(buff_head);
+            m_obj_q[i].size = m_obj_q[i].obj->deserializing(&deserial);
+            if(m_obj_q[i].size==0)
+                return false;
+            buff_head += m_obj_q[i].size;
 
            }
+
+           return true;
            
 
        }
