@@ -3,15 +3,15 @@
 
 CPP      = g++ -g
 CC       = gcc -g
-OBJ      = src/serialize.o 
+OBJ      = bin/serialize.o 
 LINKOBJ  = bin/serialize.o
 LIBS     = 
 INCS     =
 CXXINCS  = 
 BIN      = lib/libsdutil.a
 INCLUDE = -I./
-CXXFLAGS = $(CXXINCS) -std=c++1y $(INCLUDE)
-CFLAGS   = $(INCS) -std=c++1y
+CXXFLAGS = $(CXXINCS) -std=gnu++1y $(INCLUDE)
+CFLAGS   = $(INCS) -std=gnu++1y
 RM       = rm -f
 
 
@@ -27,7 +27,7 @@ $(BIN): $(LINKOBJ)
 	ranlib $(BIN)
 
 
-bin/serialize.o: src/serialize.cpp include/external/serialize.h
+bin/serialize.o: src/serialize.cpp include/external/serialize.hpp
 	$(CPP) -c src/serialize.cpp -o bin/serialize.o $(CXXFLAGS)
 
 

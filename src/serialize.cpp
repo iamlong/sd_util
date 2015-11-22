@@ -6,44 +6,88 @@
  ************************************************************************/
 
 #include<iostream>
-#include <include/external/serialize.h>
+#include <include/external/serialize.hpp>
 
 using namespace std;
 
 
 namespace util{
     namespace serialization {
-        void  serializable::setsig(sd_uint8_t start[3], sd_uint8_t end[3]){
-            memcpy(start_sig, start, 3);
-            memcpy(end_sig, end, 3);
+        void  serializable::setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]){
+            memcpy(start_sig, start, SIG_SIZE);
+            memcpy(end_sig, end, SIG_SIZE);
         }
 
-        bool serializable::checksig(sd_uint8_t start[3], sd_uint8_t end[3]){
-            return (memcmp(start, start_sig, 3)==0)&&(memcmp(end, end_sig, 3)==0);
+        bool serializable::checksig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]){
+            return (memcmp(start, start_sig, SIG_SIZE)==0)&&(memcmp(end, end_sig, SIG_SIZE)==0);
         }
-        serializer::serializer(sd_uint8_t start[3], sd_uint8_t end[3]){
-            memcpy(m_start_sig, start, 3);
-            memcpy(m_end_sig, end, 3);
-            m_totalsize = 6 + sizeof(m_totalsize); //include start_sig and end_sig
+
+        serializer * serializable::getSerializer(){
+            return m_serializer;
         }
-        sd_uint16_t serializer::push_data(auto origin_data){
+        serializer::serializer(){
+            m_totalsize = 2*SIG_SIZE + sizeof(m_totalsize); //include start_sig and end_sig
+        }
+
+        void serializer::setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]){
+            memcpy(m_start_sig, start, SIG_SIZE);
+            memcpy(m_end_sig, end, SIG_SIZE);
+        
+        }
+        sd_uint16_t serializer::push_data(sd_uint8_t* buff, sd_uint16_t size){
             dataElement data;
-            data.size = sizeof(origin_data);
+            data.size = size;
             data.buff.reset(new sd_uint8_t[data.size]);
-            memcpy(data.buff.get(), &origin_data, data.size);
+            memcpy(data.buff.get(), buff, data.size);
             m_data_q.push_back(data);
             m_totalsize += data.size+sizeof(data.size);
             return data.size;
         }
 
-        sd_uint16_t deserializer::pull_data(auto& outvalue){
+        sd_uint16_t serializer::push_data(int origin_data){
+            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
+        }
+
+        sd_uint16_t serializer::push_data(char origin_data){
+            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
+        }
+
+        sd_uint16_t serializer::push_data(double origin_data){
+            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
+        }
+        sd_uint16_t serializer::push_data(long origin_data){
+            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
+        }
+        sd_uint16_t serializer::push_data(float origin_data){
+            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
+        }
+
+        sd_uint16_t deserializer::pull_data(sd_uint8_t * outvalue, sd_uint16_t size){
          
             dataElement data;
-            data.size = sizeof(outvalue);
+            data.size = size;
             data.buff.reset(outvalue);
             m_data_q.push_back(data);
             return data.size;
         }
+
+        sd_uint16_t deserializer::pull_data(int& outvalue){
+            return pull_data((sd_uint8_t *)&outvalue, sizeof(int));
+        }
+
+        sd_uint16_t deserializer::pull_data(char& outvalue){
+            return pull_data((sd_uint8_t*)&outvalue, sizeof(char));
+        }
+        sd_uint16_t deserializer::pull_data(double& outvalue){
+            return pull_data((sd_uint8_t*)&outvalue, sizeof(double));
+        }
+        sd_uint16_t deserializer::pull_data(long& outvalue){
+            return pull_data((sd_uint8_t*)&outvalue, sizeof(long));
+        }
+        sd_uint16_t deserializer::pull_data(float& outvalue){
+            return pull_data((sd_uint8_t*)&outvalue, sizeof(float));
+        }
+
         sd_uint16_t serializer::push_data(string origin_data){
             dataElement data;
             data.size = origin_data.size()+1;
@@ -64,7 +108,8 @@ namespace util{
 
         sd_uint32_t serializer::push_data(serializable& obj){
             objElement data;
-            serializer * newserializer = new serializer(obj.start_sig, obj.end_sig);
+            serializer * newserializer = new serializer();
+            newserializer->setsig(obj.start_sig, obj.end_sig);
             data.size = obj.serializing(newserializer);
             data.obj.reset(&obj);
             m_obj_q.push_back(data);
@@ -88,9 +133,10 @@ namespace util{
             if(size<getPersistentSize())
                 return false;
             sd_uint8_t * buff_head = buff;
-            memcpy(buff_head, m_start_sig,3);
-            buff_head +=3;
+            memcpy(buff_head, m_start_sig,SIG_SIZE);
+            buff_head +=SIG_SIZE;
             memcpy(buff_head, &m_totalsize, sizeof(m_totalsize));
+            buff_head += sizeof(m_totalsize);
             sd_uint8_t qsize = m_data_q.size();
             memcpy(buff_head, &qsize, sizeof(qsize));
             buff_head += sizeof(qsize);
@@ -112,7 +158,7 @@ namespace util{
                    return false;
                 buff_head += i.size;
             }
-            memcpy(buff_head, m_end_sig, 3);
+            memcpy(buff_head, m_end_sig, SIG_SIZE);
             return true;
         }
 
@@ -120,24 +166,30 @@ namespace util{
            m_in_buff = inputbuff;
        }
 
-       deserializer::setsig(sd_uint8_t start[3], sd_uint8_t end[3]){
+       void deserializer::setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]){
          
-           memcpy(m_start_sig, start, 3);
-           memcpy(m_end_sig, end, 3);
+           memcpy(m_start_sig, start, SIG_SIZE);
+           memcpy(m_end_sig, end, SIG_SIZE);
       
        }
 
+       sd_uint32_t deserializer::getTotalSize(){
+           
+           return m_totalsize;
+
+       }
+
        bool deserializer::validate(){
-           sd_uint8_t sig[3];
+           sd_uint8_t sig[SIG_SIZE];
            sd_uint8_t * buff_head = m_in_buff;
-           if(memcmp(buff_head, m_start_sig, 3)!=0)
+           if(memcmp(buff_head, m_start_sig, SIG_SIZE)!=0)
              return false;
        
-           buff_head += 3;
+           buff_head += SIG_SIZE;
            memcpy(&m_totalsize, buff_head, sizeof(m_totalsize));
-           m_in_buff_end = buff_head +=m_totalsize-6;
+           m_in_buff_end = buff_head +=m_totalsize-2*SIG_SIZE;
 
-           if(memcmp(buff_head, m_end_sig, 3)!=0)
+           if(memcmp(buff_head, m_end_sig, SIG_SIZE)!=0)
              return false;
         
            return true;
@@ -149,7 +201,7 @@ namespace util{
            if(!validate())
             return false;
 
-           sd_uint8_t * buff_head = m_in_buff+3+sizeof(m_totalsize);
+           sd_uint8_t * buff_head = m_in_buff+SIG_SIZE+sizeof(m_totalsize);
            sd_uint8_t * buff_end = m_in_buff_end;
 
            sd_uint8_t qsize;
