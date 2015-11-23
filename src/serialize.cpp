@@ -37,62 +37,27 @@ namespace util{
         sd_uint16_t serializer::push_data(sd_uint8_t* buff, sd_uint16_t size){
             dataElement data;
             data.size = size;
-            data.buff.reset(new sd_uint8_t[data.size]);
-            memcpy(data.buff.get(), buff, data.size);
+            data.buff=new sd_uint8_t[data.size];
+            memcpy(data.buff, buff, data.size);
             m_data_q.push_back(data);
             m_totalsize += data.size+sizeof(data.size);
             return data.size;
-        }
-
-        sd_uint16_t serializer::push_data(int origin_data){
-            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
-        }
-
-        sd_uint16_t serializer::push_data(char origin_data){
-            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
-        }
-
-        sd_uint16_t serializer::push_data(double origin_data){
-            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
-        }
-        sd_uint16_t serializer::push_data(long origin_data){
-            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
-        }
-        sd_uint16_t serializer::push_data(float origin_data){
-            return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
         }
 
         sd_uint16_t deserializer::pull_data(sd_uint8_t * outvalue, sd_uint16_t size){
          
             dataElement data;
             data.size = size;
-            data.buff.reset(outvalue);
+            data.buff= outvalue;
             m_data_q.push_back(data);
             return data.size;
-        }
-
-        sd_uint16_t deserializer::pull_data(int& outvalue){
-            return pull_data((sd_uint8_t *)&outvalue, sizeof(int));
-        }
-
-        sd_uint16_t deserializer::pull_data(char& outvalue){
-            return pull_data((sd_uint8_t*)&outvalue, sizeof(char));
-        }
-        sd_uint16_t deserializer::pull_data(double& outvalue){
-            return pull_data((sd_uint8_t*)&outvalue, sizeof(double));
-        }
-        sd_uint16_t deserializer::pull_data(long& outvalue){
-            return pull_data((sd_uint8_t*)&outvalue, sizeof(long));
-        }
-        sd_uint16_t deserializer::pull_data(float& outvalue){
-            return pull_data((sd_uint8_t*)&outvalue, sizeof(float));
         }
 
         sd_uint16_t serializer::push_data(string origin_data){
             dataElement data;
             data.size = origin_data.size()+1;
-            data.buff.reset(new sd_uint8_t[data.size]);
-            memcpy(data.buff.get(), origin_data.data(), data.size);
+            data.buff=new sd_uint8_t[data.size];
+            memcpy(data.buff, origin_data.data(), data.size);
             m_data_q.push_back(data);
             m_totalsize += data.size+sizeof(data.size);
             return data.size;
@@ -101,7 +66,7 @@ namespace util{
         sd_uint16_t deserializer::pull_data(string & outstring){
             dataElement data;
             data.size = 0;
-            data.buff.reset((sd_uint8_t*)&outstring);
+            data.buff=(sd_uint8_t*)&outstring;
             m_data_q.push_back(data);
             return data.size;
         }
@@ -144,7 +109,7 @@ namespace util{
             for(auto& i: m_data_q ){
                 memcpy(buff_head, &i.size, sizeof(i.size));
                 buff_head+=sizeof(i.size);
-                memcpy(buff_head, i.buff.get(), i.size);
+                memcpy(buff_head, i.buff, i.size);
                 buff_head +=i.size;
             }
 
@@ -165,18 +130,11 @@ namespace util{
 
         void serializer:: release(){
             for(auto& i: m_data_q)
-                i.buff.reset();
+                delete i.buff;
             for(auto& i: m_obj_q)
                 i.obj.reset();
         }
 
-        void deserializer::release(){
-            for(auto& i: m_data_q)
-                i.buff.reset();
-            for(auto& i: m_obj_q)
-                i.obj.reset();
-           
-        }
 
        deserializer::deserializer(sd_uint8_t* inputbuff){
            m_in_buff = inputbuff;
@@ -238,15 +196,14 @@ namespace util{
                    sd_uint8_t * temp = new sd_uint8_t[data.size];
                    buff_head += sizeof(data.size);
                    memcpy(temp, buff_head, data.size);
-                   string * str = (string*) (data.buff.get());
+                   string * str = (string*) (data.buff);
                    str->append((char*) temp, (size_t)data.size);
                    delete temp;
                }else {
                 buff_head += sizeof(data.size);
-                memcpy(data.buff.get(), buff_head, data.size);
+                memcpy(data.buff, buff_head, data.size);
                }
                buff_head += data.size;
-               //m_data_q.push_back(data);
                if(buff_head>buff_end&&i<qsize)
                 return false;
            }
@@ -262,7 +219,7 @@ namespace util{
             deserializer deserial(buff_head);
             m_obj_q[i].size = m_obj_q[i].obj->deserializing(&deserial);
             if(m_obj_q[i].size==0)
-                return false;
+               return false;
             buff_head += m_obj_q[i].size;
 
            }

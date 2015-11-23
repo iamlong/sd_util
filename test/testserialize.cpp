@@ -69,7 +69,7 @@ TEST(sERIALIZETEST, PRIMARYDATA){
     deser_a.setsig((sd_uint8_t*)"abc", (sd_uint8_t*)"cba");
    testobj2->deserializing(&deser_a);
    deser_a.readbuff();
-    deser_a.release();
+    //deser_a.release();
    ASSERT_EQ(testobj1->a, testobj2->a);
    ASSERT_EQ(testobj1->b, testobj2->b);
    ASSERT_EQ(testobj1->c, testobj2->c);

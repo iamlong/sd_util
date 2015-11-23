@@ -40,7 +40,7 @@ namespace util {
         };
         struct dataElement{
             sd_uint16_t size;
-            shared_ptr<sd_uint8_t> buff;
+            sd_uint8_t * buff;
         };
         struct objElement{
             sd_uint32_t size;
@@ -54,11 +54,9 @@ namespace util {
                 serializer();
                 void setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]);
                 sd_uint16_t push_data(sd_uint8_t * buff, sd_uint16_t size);
-                sd_uint16_t push_data(int origin_data);
-                sd_uint16_t push_data(char origin_data);
-                sd_uint16_t push_data(long origin_data);
-                sd_uint16_t push_data(double origin_data);
-                sd_uint16_t push_data(float origin_data);
+                sd_uint16_t push_data(auto origin_data){
+                    return push_data((sd_uint8_t*)&origin_data, sizeof(origin_data));
+                }
                 sd_uint16_t push_data(string origin_data);
                 sd_uint32_t push_data(serializable& obj);
                 bool writebuff(sd_uint8_t* buff, sd_uint32_t size);
@@ -80,11 +78,9 @@ namespace util {
             public:
                 deserializer(sd_uint8_t * inputbuff);
                 sd_uint16_t pull_data(sd_uint8_t* outvalue, sd_uint16_t size);
-                sd_uint16_t pull_data(int& outvalue);
-                sd_uint16_t pull_data(char& outvalue);
-                sd_uint16_t pull_data(double& outvalue);
-                sd_uint16_t pull_data(long& outvalue);
-                sd_uint16_t pull_data(float& outvalue);
+                sd_uint16_t pull_data(auto& outvalue){
+                    return pull_data((sd_uint8_t*)&outvalue, sizeof(outvalue));
+                }
                 sd_uint16_t pull_data(string& outvalue);
                 sd_uint32_t pull_data(serializable & obj);
                 sd_uint32_t getTotalSize();
