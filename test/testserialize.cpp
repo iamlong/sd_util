@@ -38,6 +38,7 @@ class testSerial : public serializable{
             deserialobj->pull_data(b);
             deserialobj->pull_data(c);
             deserialobj->pull_data(d);
+            deserialobj->pull_data(e);
             return deserialobj->getTotalSize();
   
         }
@@ -60,6 +61,7 @@ TEST(sERIALIZETEST, PRIMARYDATA){
    sd_uint32_t size = testobj1->serializing(&ser_a);
    sd_uint8_t * buff = new sd_uint8_t[size];
    ser_a.writebuff(buff, size);
+    ser_a.release();
    
    testSerial * testobj2 = new testSerial();
    deserializer deser_a(buff);
@@ -67,13 +69,15 @@ TEST(sERIALIZETEST, PRIMARYDATA){
     deser_a.setsig((sd_uint8_t*)"abc", (sd_uint8_t*)"cba");
    testobj2->deserializing(&deser_a);
    deser_a.readbuff();
-
+    deser_a.release();
    ASSERT_EQ(testobj1->a, testobj2->a);
    ASSERT_EQ(testobj1->b, testobj2->b);
    ASSERT_EQ(testobj1->c, testobj2->c);
    ASSERT_EQ(testobj1->d, testobj2->d);
    ASSERT_EQ(testobj1->e, testobj2->e);
-
+    
+    delete testobj1;
+    delete testobj2;
 }
 
 int main(int argc, char **argv) {  

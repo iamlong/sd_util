@@ -26,7 +26,7 @@ namespace util{
             return m_serializer;
         }
         serializer::serializer(){
-            m_totalsize = 2*SIG_SIZE + sizeof(m_totalsize); //include start_sig and end_sig
+            m_totalsize = 2*SIG_SIZE + sizeof(m_totalsize)+2*Q_SIZE; //include start_sig and end_sig
         }
 
         void serializer::setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]){
@@ -137,6 +137,7 @@ namespace util{
             buff_head +=SIG_SIZE;
             memcpy(buff_head, &m_totalsize, sizeof(m_totalsize));
             buff_head += sizeof(m_totalsize);
+            
             sd_uint8_t qsize = m_data_q.size();
             memcpy(buff_head, &qsize, sizeof(qsize));
             buff_head += sizeof(qsize);
@@ -160,6 +161,21 @@ namespace util{
             }
             memcpy(buff_head, m_end_sig, SIG_SIZE);
             return true;
+        }
+
+        void serializer:: release(){
+            for(auto& i: m_data_q)
+                i.buff.reset();
+            for(auto& i: m_obj_q)
+                i.obj.reset();
+        }
+
+        void deserializer::release(){
+            for(auto& i: m_data_q)
+                i.buff.reset();
+            for(auto& i: m_obj_q)
+                i.obj.reset();
+           
         }
 
        deserializer::deserializer(sd_uint8_t* inputbuff){
@@ -230,7 +246,7 @@ namespace util{
                 memcpy(data.buff.get(), buff_head, data.size);
                }
                buff_head += data.size;
-               m_data_q.push_back(data);
+               //m_data_q.push_back(data);
                if(buff_head>buff_end&&i<qsize)
                 return false;
            }

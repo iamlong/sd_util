@@ -20,6 +20,7 @@ namespace util {
         class deserializer;
 
         #define SIG_SIZE 4
+        #define Q_SIZE 1
         class serializable{
             friend serializer;
             friend deserializer;
@@ -63,6 +64,8 @@ namespace util {
                 bool writebuff(sd_uint8_t* buff, sd_uint32_t size);
                 sd_uint32_t getPersistentSize();
 
+                void release();
+
             private:
                 sd_uint8_t m_start_sig[SIG_SIZE];
                 sd_uint8_t m_end_sig[SIG_SIZE];
@@ -88,7 +91,8 @@ namespace util {
                 void setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]);
                 bool validate();
                 bool readbuff();
-          
+
+                void release();
             protected:
                 sd_uint8_t m_start_sig[SIG_SIZE];
                 sd_uint8_t m_end_sig[SIG_SIZE];
