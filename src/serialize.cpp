@@ -55,7 +55,7 @@ namespace util{
 
         sd_uint16_t serializer::push_data(string origin_data){
             dataElement data;
-            data.size = origin_data.size()+1;
+            data.size = origin_data.size();
             data.buff=new sd_uint8_t[data.size];
             memcpy(data.buff, origin_data.data(), data.size);
             m_data_q.push_back(data);

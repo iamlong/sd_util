@@ -11,13 +11,14 @@ class testSerial : public serializable{
         long c;
         double d;
         float e;
+        string f;
 
         using serializable::setsig;
         using serializable::checksig;
         
         testserial(){
-            sd_uint8_t start[]="abc";
-            sd_uint8_t end[]="cba";
+            sd_uint8_t start[SIG_SIZE]="abc";
+            sd_uint8_t end[SIG_SIZE]="cba";
             setsig(start, end);
 
         }
@@ -28,6 +29,7 @@ class testSerial : public serializable{
             serialObj->push_data(c);
             serialObj->push_data(d);
             serialObj->push_data(e);
+            serialObj->push_data(f);
             return serialObj->getPersistentSize();   
         }
         sd_uint32_t deserializing(deserializer* deserialobj){
@@ -39,6 +41,7 @@ class testSerial : public serializable{
             deserialobj->pull_data(c);
             deserialobj->pull_data(d);
             deserialobj->pull_data(e);
+            deserialobj->pull_data(f);
             return deserialobj->getTotalSize();
   
         }
@@ -54,6 +57,7 @@ TEST(sERIALIZETEST, PRIMARYDATA){
    testobj1->d = 30;
 
    testobj1->e = 10.10;
+    testobj1->f="my test string here!";
 
    serializer ser_a;
    ser_a.setsig((sd_uint8_t*)"abc", (sd_uint8_t*)"cba");
@@ -75,6 +79,7 @@ TEST(sERIALIZETEST, PRIMARYDATA){
    ASSERT_EQ(testobj1->c, testobj2->c);
    ASSERT_EQ(testobj1->d, testobj2->d);
    ASSERT_EQ(testobj1->e, testobj2->e);
+   ASSERT_EQ(testobj1->f, testobj2->f);
     
     delete testobj1;
     delete testobj2;
