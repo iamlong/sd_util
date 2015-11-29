@@ -76,7 +76,7 @@ namespace util{
             serializer * newserializer = new serializer();
             newserializer->setsig(obj.start_sig, obj.end_sig);
             data.size = obj.serializing(newserializer);
-            data.obj.reset(&obj);
+            data.obj = &obj;
             m_obj_q.push_back(data);
             m_totalsize += data.size+sizeof(data.size);
             return data.size;
@@ -85,7 +85,7 @@ namespace util{
         sd_uint32_t deserializer::pull_data(serializable & obj){
             objElement data;
             data.size = 0;
-            data.obj.reset(&obj);
+            data.obj = &obj;
             m_obj_q.push_back(data);
             return data.size;
         }
@@ -120,7 +120,7 @@ namespace util{
             for(auto&i:m_obj_q){
                 memcpy(buff_head, &i.size, sizeof(i.size));
                 buff_head += sizeof(i.size);
-                if(!i.obj.get()->getSerializer()->writebuff(buff_head, i.size))
+                if(!i.obj->getSerializer()->writebuff(buff_head, i.size))
                    return false;
                 buff_head += i.size;
             }
@@ -132,12 +132,14 @@ namespace util{
             for(auto& i: m_data_q)
                 delete i.buff;
             for(auto& i: m_obj_q)
-                i.obj.reset();
+                delete i.obj;
         }
 
 
        deserializer::deserializer(sd_uint8_t* inputbuff){
            m_in_buff = inputbuff;
+           m_totalsize = 2*SIG_SIZE + sizeof(m_totalsize)+2*Q_SIZE; //include start_sig and end_sig
+        
        }
 
        void deserializer::setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]){
@@ -168,6 +170,10 @@ namespace util{
         
            return true;
 
+       }
+
+       deserializer * serializable::getDeserializer(){
+           return m_deserializer;
        }
 
        bool deserializer::readbuff(){
@@ -216,9 +222,12 @@ namespace util{
            
 
            for(sd_uint8_t i=0; i<qsize; i++){
+            memcpy(&(m_obj_q[i].size), buff_head, sizeof(m_obj_q[i].size));
+            buff_head +=sizeof(m_obj_q[i].size);
             deserializer deserial(buff_head);
-            m_obj_q[i].size = m_obj_q[i].obj->deserializing(&deserial);
-            if(m_obj_q[i].size==0)
+            m_obj_q[i].obj->deserializing(&deserial);
+            m_obj_q[i].obj->getDeserializer()->readbuff();
+            if(m_obj_q[i].size != m_obj_q[i].obj->getDeserializer()->getTotalSize())
                return false;
             buff_head += m_obj_q[i].size;
 

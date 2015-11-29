@@ -33,8 +33,9 @@ namespace util {
                  void setsig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]);
                  bool checksig(sd_uint8_t start[SIG_SIZE], sd_uint8_t end[SIG_SIZE]);
                  serializer * getSerializer();
+                 deserializer * getDeserializer();
 
-            private:
+            protected:
                  serializer * m_serializer;
                  deserializer * m_deserializer;
         };
@@ -44,7 +45,7 @@ namespace util {
         };
         struct objElement{
             sd_uint32_t size;
-            shared_ptr<serializable> obj;
+            serializable* obj;
         };
         
 
