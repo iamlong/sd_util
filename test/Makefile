@@ -7,8 +7,8 @@ OBJS = testserialize.o
 all: $(OBJS)
 
 $(OBJS): %.o: %.cpp
-	g++ -g -std=gnu++1y $< -o $@ $(INCDIR) $(LDDIR) $(LDMOULE) 
+	g++ -g -std=gnu++1y $< -o testbin/$@ $(INCDIR) $(LDDIR) $(LDMOULE) 
 	#./$@
 
 clean : 
-	rm -f *.o
+	rm -f *.o *.stackdump
